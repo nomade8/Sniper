@@ -134,12 +134,12 @@ export default function Game(props: Props) {
       if (targetRoot) targetRoot.visible = false
       s.score += points
       s.hitFlash = s.elapsed + 0.35
-      s.lastHit = `${bullseye ? 'NA MOSCA' : 'ALVO ACERTADO'} · ${distance} m · +${points}`
+      s.lastHit = `${bullseye ? 'BULLSEYE' : 'TARGET HIT'} · ${distance} m · +${points}`
       s.message = s.lastHit
       messageUntil.current = s.elapsed + 3
       playSound('hit')
     } else {
-      s.message = 'Não acertou · Ajuste a mira e tente novamente'
+      s.message = 'Miss · Adjust your aim and try again'
       messageUntil.current = s.elapsed + 1.8
     }
     publish()
@@ -312,7 +312,7 @@ export default function Game(props: Props) {
         if (intersection) resolveImpact(intersection, projectile)
         else if (projectile.age < MAX_FLIGHT_SECONDS - 1e-8) survivors.push(projectile)
         else {
-          stats.current.message = 'Disparo fora do terreno'
+          stats.current.message = 'Shot out of bounds'
           messageUntil.current = stats.current.elapsed + 1.8
         }
       }

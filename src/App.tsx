@@ -39,7 +39,7 @@ function Reticle() {
         </g>
         <circle cx="500" cy="500" r="2.6" fill="#ca602e" />
         <path d="M325 790h190m-190 0q30-60 190-87" stroke="#162520" strokeWidth="1.3" fill="none" opacity=".75" />
-        <text x="325" y="810" fontFamily="monospace" fontSize="12" fill="#162520">ALVOS / 1.85 m</text>
+        <text x="325" y="810" fontFamily="monospace" fontSize="12" fill="#162520">TARGETS / 1.85 m</text>
       </svg>
       <div className="scope-vignette" />
     </div>
@@ -48,11 +48,11 @@ function Reticle() {
 
 function Controls({ full = false }: { full?: boolean }) {
   return <div className={`controls ${full ? 'full-controls' : ''}`}>
-    <div><span className="key mouse-key">LMB</span><span>Atirar</span></div>
-    <div><span className="key mouse-key">RMB</span><span>Mira telescópica</span></div>
+    <div><span className="key mouse-key">LMB</span><span>Fire</span></div>
+    <div><span className="key mouse-key">RMB</span><span>Scope</span></div>
     <div><span className="key">↕</span><span>Zoom</span></div>
-    <div><span className="key">SHIFT</span><span>Segurar respiração</span></div>
-    {full && <><div><span className="key">H</span><span>Mostrar / ocultar alvos</span></div><div><span className="key">F</span><span>Ajuda</span></div><div><span className="key">ESC</span><span>Pausar / liberar mouse</span></div></>}
+    <div><span className="key">SHIFT</span><span>Hold breath</span></div>
+    {full && <><div><span className="key">H</span><span>Show / hide targets</span></div><div><span className="key">F</span><span>Help</span></div><div><span className="key">ESC</span><span>Pause / release mouse</span></div></>}
   </div>
 }
 
@@ -60,7 +60,7 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
   render() {
-    if (this.state.failed) return <div className="webgl-error">Não foi possível iniciar o cenário 3D. Ative a aceleração de hardware do navegador e recarregue a página.</div>
+    if (this.state.failed) return <div className="webgl-error">Unable to load the 3D scene. Enable hardware acceleration in your browser and reload the page.</div>
     return this.props.children
   }
 }
@@ -88,7 +88,7 @@ export default function App() {
 
   useEffect(() => {
     const change = () => setLocked(document.pointerLockElement === canvas.current)
-    const failure = () => setError('O navegador não capturou o mouse. Clique novamente para entrar.')
+    const failure = () => setError('The browser could not lock the mouse. Click again to enter.')
     const blur = () => { if (document.pointerLockElement) document.exitPointerLock() }
     document.addEventListener('pointerlockchange', change)
     document.addEventListener('pointerlockerror', failure)
@@ -110,7 +110,7 @@ export default function App() {
     setStarted(true)
     resumeAudio()
     const result = canvas.current?.requestPointerLock()
-    if (result) void result.catch(() => setError('Clique novamente em continuar para capturar o mouse.'))
+    if (result) void result.catch(() => setError('Click Resume Operation again to lock the mouse.'))
   }
   const newRound = () => {
     let next = crypto.getRandomValues(new Uint32Array(1))[0]
@@ -120,8 +120,8 @@ export default function App() {
     setSeed(next)
     enter()
   }
-  const bearing = stats.scoped ? 'OBSERVAÇÃO DE PRECISÃO' : 'POSTO DE OBSERVAÇÃO'
-  const windBearing = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'][Math.round(stats.windDirection / 45) % 8]
+  const bearing = stats.scoped ? 'PRECISION OVERWATCH' : 'OBSERVATION POST'
+  const windBearing = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(stats.windDirection / 45) % 8]
 
   return <main className={`game-shell ${stats.scoped && active ? 'is-scoped' : ''} ${active ? 'is-playing' : 'in-menu'}`}>
     <SceneBoundary>
@@ -139,37 +139,37 @@ export default function App() {
     {stats.scoped && active && <Reticle />}
 
     <header className="top-bar">
-      <a className="brand" href="#" onClick={event => { event.preventDefault(); if (locked) document.exitPointerLock() }} aria-label="Highland, menu do jogo">
+      <a className="brand" href="#" onClick={event => { event.preventDefault(); if (locked) document.exitPointerLock() }} aria-label="Highland, game menu">
         <span className="brand-icon"><Icon name="mountain" size={28} /></span>
-        <span>HIGHLAND<small>SNIPER DE PRECISÃO</small></span>
+        <span>HIGHLAND<small>PRECISION SNIPER</small></span>
       </a>
-      <div className="location-tag"><span className="live-dot" /><span>VALE DO PINHEIRO<small>SETOR 07 · 1.000 × 1.000 M</small></span></div>
-      <div className="session-tag"><span>TREINO LIVRE</span><small>SEM PRESSA. CADA TIRO CONTA.</small></div>
+      <div className="location-tag"><span className="live-dot" /><span>PINE VALLEY<small>SECTOR 07 · 1,000 × 1,000 M</small></span></div>
+      <div className="session-tag"><span>FREE PRACTICE</span><small>TAKE YOUR TIME. EVERY SHOT COUNTS.</small></div>
     </header>
 
     {active && <>
       <div className="compass"><span>{Math.round((stats.heading + 315) % 360)}</span><i /><span>{Math.round((stats.heading + 330) % 360)}</span><i /><span>{Math.round((stats.heading + 345) % 360)}</span><i /><strong>{Math.round(stats.heading).toString().padStart(3, '0')}°</strong><i /><span>{Math.round((stats.heading + 15) % 360)}</span><i /><span>{Math.round((stats.heading + 30) % 360)}</span><i /><span>{Math.round((stats.heading + 45) % 360)}</span><b>▾</b></div>
       <div className="mission-card">
-        <div className="eyebrow"><span className="live-dot" /> OPERAÇÃO HORIZONTE</div>
-        <h2>Limpe o setor.</h2>
-        <p>Localize e acerte os alvos de treino.</p>
-        <div className="mission-progress"><Icon name="crosshair" size={17} /><strong>{stats.hits.length.toString().padStart(2, '0')}</strong><span>/ {TARGET_COUNT} ALVOS</span><div className="progress-track"><div style={{ width: `${stats.hits.length / TARGET_COUNT * 100}%` }} /></div></div>
-        <div className="mission-meta"><span><Icon name="clock" size={13} /> {formatTime(stats.elapsed)}</span><span>{stats.score.toLocaleString('pt-BR')} PTS</span></div>
+        <div className="eyebrow"><span className="live-dot" /> OPERATION HORIZON</div>
+        <h2>Clear the sector.</h2>
+        <p>Locate and hit the training targets.</p>
+        <div className="mission-progress"><Icon name="crosshair" size={17} /><strong>{stats.hits.length.toString().padStart(2, '0')}</strong><span>/ {TARGET_COUNT} TARGETS</span><div className="progress-track"><div style={{ width: `${stats.hits.length / TARGET_COUNT * 100}%` }} /></div></div>
+        <div className="mission-meta"><span><Icon name="clock" size={13} /> {formatTime(stats.elapsed)}</span><span>{stats.score.toLocaleString('en-US')} PTS</span></div>
       </div>
 
       <div className="field-data">
         <span className="eyebrow">{bearing}</span>
         <div className="range"><strong>{stats.distance || '—'}</strong><span>m</span></div>
-        <div className="range-label">DISTÂNCIA DA MIRA</div>
+        <div className="range-label">TARGET RANGE</div>
         <div className="wind">
           <Icon name="wind" size={16} /><span className="wind-speed">{stats.wind.toFixed(1)} m/s</span>
-          <span className="wind-direction" aria-label={`Vento soprando para ${stats.windDirection} graus`}>
+          <span className="wind-direction" aria-label={`Wind blowing toward ${stats.windDirection} degrees`}>
             <span className="wind-arrow" style={{ transform: `rotate(${stats.windDirection - 90}deg)` }}>→</span>
             {stats.windDirection.toString().padStart(3, '0')}° {windBearing}
           </span>
         </div>
-        <div className="zero">ZERAGEM <b>300 m</b></div>
-        {stats.scoped && <div className="zoom-level"><Icon name="scope" size={17} /><strong>{stats.zoom}×</strong><span>↕ AJUSTAR</span></div>}
+        <div className="zero">ZERO <b>300 m</b></div>
+        {stats.scoped && <div className="zoom-level"><Icon name="scope" size={17} /><strong>{stats.zoom}×</strong><span>↕ ADJUST</span></div>}
       </div>
 
       {markersEnabled && <div className="target-markers" aria-hidden="true">
@@ -182,27 +182,27 @@ export default function App() {
       {stats.message && <div className={`shot-message ${stats.message === stats.lastHit ? 'success' : ''}`}>{stats.message === stats.lastHit && <Icon name="crosshair" size={17} />}{stats.message}</div>}
 
       <footer className="bottom-bar">
-        <div className="stance"><span className="eyebrow">POSIÇÃO FIXA</span><strong>CRISTA NORTE <small>+{Math.round(OBSERVER.y)} m</small></strong><span><span className="live-dot" /> {markersEnabled ? 'ALVOS ASSISTIDOS' : 'MODO OBSERVAÇÃO'} <kbd>H</kbd></span></div>
-        <div className="breath-panel"><span>{stats.steady ? 'RESPIRAÇÃO PRESA' : 'ESTABILIDADE DA MIRA'} <kbd>SHIFT</kbd></span><div className="breath-track"><div style={{ width: `${stats.breath}%` }} /></div><small>{stats.steady ? 'Mantenha a mira. Aproveite a janela.' : 'Segure a respiração para um tiro preciso.'}</small></div>
-        <div className="ammo-panel"><div className="weapon-label"><span>M24</span><small>7.62 × 51 MM · TIROS ILIMITADOS</small></div><div className="ammo" aria-label="Munição infinita"><strong>∞</strong><span>LIVRE</span></div></div>
+        <div className="stance"><span className="eyebrow">FIXED POSITION</span><strong>NORTH RIDGE <small>+{Math.round(OBSERVER.y)} m</small></strong><span><span className="live-dot" /> {markersEnabled ? 'TARGET ASSIST' : 'OBSERVATION MODE'} <kbd>H</kbd></span></div>
+        <div className="breath-panel"><span>{stats.steady ? 'HOLDING BREATH' : 'AIM STABILITY'} <kbd>SHIFT</kbd></span><div className="breath-track"><div style={{ width: `${stats.breath}%` }} /></div><small>{stats.steady ? 'Steady your aim. Take the opening.' : 'Hold your breath for a precise shot.'}</small></div>
+        <div className="ammo-panel"><div className="weapon-label"><span>M24</span><small>7.62 × 51 MM · UNLIMITED SHOTS</small></div><div className="ammo" aria-label="Unlimited ammunition"><strong>∞</strong><span>FREE</span></div></div>
       </footer>
-      <div className="playing-hints"><span><kbd>RMB</kbd> MIRA</span><span><kbd>LMB</kbd> DISPARAR</span><span><kbd>F</kbd> AJUDA</span><span><kbd>ESC</kbd> PAUSAR</span></div>
+      <div className="playing-hints"><span><kbd>RMB</kbd> SCOPE</span><span><kbd>LMB</kbd> FIRE</span><span><kbd>F</kbd> HELP</span><span><kbd>ESC</kbd> PAUSE</span></div>
     </>}
 
     {!active && <div className="menu-overlay">
       <section className={`intro-panel ${complete ? 'results-panel' : ''}`}>
-        <div className="eyebrow"><span className="line-accent" />{complete ? 'SETOR CONCLUÍDO' : help ? 'MANUAL DE CAMPO' : started ? 'OPERAÇÃO EM PAUSA' : 'UM VALE. UMA MIRA. VOCÊ.'}</div>
-        <h1>{complete ? <>Precisão<br /><em>em altitude.</em></> : help ? <>Conheça<br /><em>sua mira.</em></> : started ? <>Respire.<br /><em>Volte ao alvo.</em></> : <>O silêncio antes<br /><em>do disparo.</em></>}</h1>
-      <p className="intro-copy">{complete ? 'Todos os alvos foram abatidos. O vale está limpo. Uma nova rodada traz novas posições para desafiar sua precisão.' : help ? 'Procure figuras humanas caminhando pelas ruas e pela floresta. Elas podem se esconder atrás de árvores e prédios: espere uma abertura e antecipe o movimento. A mira está zerada a 300 metros; ajuste a elevação e consulte a velocidade e a direção do vento no painel. A seta indica para onde ele sopra.' : started ? 'Seu progresso está salvo nesta rodada. Volte ao posto de observação quando estiver pronto.' : 'No alto da montanha, cada detalhe importa. Observe figuras em movimento entre os prédios e pinheiros, espere uma abertura e domine o tiro a longa distância.'}</p>
-      {complete ? <div className="result-grid"><div><strong>{stats.score.toLocaleString('pt-BR')}</strong><span>PONTUAÇÃO</span></div><div><strong>{accuracy}%</strong><span>PRECISÃO</span></div><div><strong>{formatTime(stats.elapsed)}</strong><span>TEMPO</span></div><div><strong>{stats.shots}</strong><span>DISPAROS</span></div></div> : help ? <Controls full /> : <div className="intro-features"><span><Icon name="crosshair" />12 alvos móveis</span><span><Icon name="scope" />Mira até 12×</span><span><Icon name="mountain" />1 km² de terreno</span></div>}
-        <button className="start-button" onClick={complete ? newRound : enter} disabled={!ready}>{!ready ? 'PREPARANDO O TERRENO…' : complete ? 'NOVA OPERAÇÃO' : started ? 'CONTINUAR OPERAÇÃO' : 'ASSUMIR POSIÇÃO'}<Icon name="arrow" /></button>
+        <div className="eyebrow"><span className="line-accent" />{complete ? 'SECTOR CLEARED' : help ? 'FIELD MANUAL' : started ? 'OPERATION PAUSED' : 'ONE VALLEY. ONE SCOPE. YOU.'}</div>
+        <h1>{complete ? <>Precision<br /><em>at altitude.</em></> : help ? <>Know<br /><em>your scope.</em></> : started ? <>Breathe.<br /><em>Back on target.</em></> : <>The silence<br /><em>before the shot.</em></>}</h1>
+      <p className="intro-copy">{complete ? 'All targets are down. The valley is clear. Start a new round with fresh target positions to test your precision.' : help ? 'Look for human figures walking along the streets and through the forest. Trees and buildings can block your view: wait for an opening and lead moving targets. The scope is zeroed at 300 meters; adjust your elevation and check wind speed and direction on the panel. The arrow shows which way the wind is blowing.' : started ? 'Your progress is saved for this round. Return to the observation post when you are ready.' : 'High on the mountain, every detail matters. Track moving figures among the buildings and pines, wait for an opening, and master long-range shooting.'}</p>
+      {complete ? <div className="result-grid"><div><strong>{stats.score.toLocaleString('en-US')}</strong><span>SCORE</span></div><div><strong>{accuracy}%</strong><span>ACCURACY</span></div><div><strong>{formatTime(stats.elapsed)}</strong><span>TIME</span></div><div><strong>{stats.shots}</strong><span>SHOTS</span></div></div> : help ? <Controls full /> : <div className="intro-features"><span><Icon name="crosshair" />12 moving targets</span><span><Icon name="scope" />Up to 12× zoom</span><span><Icon name="mountain" />1 km² of terrain</span></div>}
+        <button className="start-button" onClick={complete ? newRound : enter} disabled={!ready}>{!ready ? 'PREPARING TERRAIN…' : complete ? 'NEW OPERATION' : started ? 'RESUME OPERATION' : 'TAKE POSITION'}<Icon name="arrow" /></button>
         {error && <p className="input-error" role="alert">{error}</p>}
-        {!complete && started && <button className="secondary-button" onClick={newRound}>Reiniciar com novos alvos <span>↗</span></button>}
+        {!complete && started && <button className="secondary-button" onClick={newRound}>Restart with new targets <span>↗</span></button>}
         {!help && !complete && <Controls />}
-        <div className="intro-note"><Icon name="sound" size={14} /><span>Áudio ligado ao iniciar · Use fones para os disparos</span></div>
+        <div className="intro-note"><Icon name="sound" size={14} /><span>Audio starts when you play · Use headphones for gunfire</span></div>
       </section>
-      <div className="map-caption"><span className="caption-line" /><div><span>SEU POSTO DE OBSERVAÇÃO</span><strong>Crista Norte</strong><small>VISTA PARA A CIDADE E O PARQUE</small></div><span className="coordinates">07 / N<br />ALT. {Math.round(OBSERVER.y)} M</span></div>
-      <div className="menu-footer"><span>HIGHLAND / CAMPO DE TREINO</span><span>TERRENO PROCEDURAL · BALÍSTICA SIMULADA</span><span>EXPERIÊNCIA PARA COMPUTADOR</span></div>
+      <div className="map-caption"><span className="caption-line" /><div><span>YOUR OBSERVATION POST</span><strong>North Ridge</strong><small>OVERLOOKING THE CITY AND PARK</small></div><span className="coordinates">07 / N<br />ALT. {Math.round(OBSERVER.y)} M</span></div>
+      <div className="menu-footer"><span>HIGHLAND / TRAINING GROUND</span><span>PROCEDURAL TERRAIN · SIMULATED BALLISTICS</span><span>DESKTOP EXPERIENCE</span></div>
     </div>}
   </main>
 }

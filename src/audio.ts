@@ -6,7 +6,7 @@ const shotUrl = new URL('./assets/audio/shot_gun.mp3', import.meta.url).href
 function loadShot(audioContext: AudioContext) {
   shotBuffer ??= fetch(shotUrl)
     .then(response => {
-      if (!response.ok) throw new Error('Não foi possível carregar o som do tiro.')
+      if (!response.ok) throw new Error('Unable to load the gunshot sound.')
       return response.arrayBuffer()
     })
     .then(data => audioContext.decodeAudioData(data))
@@ -26,7 +26,7 @@ export function resumeAudio() {
     for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1
   }
   // Pré-carrega o disparo ao iniciar para reduzir o atraso do primeiro tiro.
-  void loadShot(context).catch(error => console.error('Erro ao carregar áudio:', error))
+  void loadShot(context).catch(error => console.error('Error loading audio:', error))
 }
 
 export function playSound(kind: 'shot' | 'hit') {
@@ -61,7 +61,7 @@ export function playSound(kind: 'shot' | 'hit') {
       }
       source.start(now)
       source.stop(now + duration)
-    }).catch(error => console.error('Erro ao reproduzir disparo:', error))
+    }).catch(error => console.error('Error playing gunshot:', error))
     return
   }
   const now = context.currentTime

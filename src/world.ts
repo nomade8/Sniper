@@ -217,7 +217,7 @@ export function makeTargets(seed: number): TargetSpec[] {
         if (route.slice(1).some((p, index) => !walkableSegment(route[index], p))) continue
       }
       const spec: TargetSpec = {
-        id: i + 1, position: [0, 0, 0], zone: forest ? 'FLORESTA' : 'RUA',
+        id: i + 1, position: [0, 0, 0], zone: forest ? 'FOREST' : 'STREET',
         moving: true, phase: rng() * Math.PI * 2, route, distances: routeDistances(route),
         speed: 0.8 + rng() * 0.9, loop: !forest,
         walkDuration: 6 + rng() * 7, pauseDuration: 2 + rng() * 4,
@@ -237,7 +237,7 @@ export function makeTargets(seed: number): TargetSpec[] {
       if (visible >= 3 && visible < 24) { chosen = spec; break }
     }
     if (!chosen) chosen = best
-    if (!chosen) throw new Error('Não foi possível gerar um percurso acessível para os alvos.')
+    if (!chosen) throw new Error('Unable to generate an accessible route for the targets.')
     targets.push(chosen)
   }
   return targets
