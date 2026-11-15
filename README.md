@@ -45,7 +45,8 @@ Clique em **Assumir posição** para o navegador capturar o mouse. O jogo foi fe
 - 12 alvos com forma humana por rodada: cinco na cidade e sete nas florestas, todos móveis, com braços e pernas animados.
 - Posições iniciais, percursos, velocidades e roupas sorteados ao abrir o jogo e a cada nova operação.
 - Percursos contornam prédios, carros e troncos, alternando janelas de visão e trechos encobertos.
-- Cada alvo alterna 6–13 segundos de caminhada com 2–6 segundos parado, em ritmos diferentes; braços e pernas repousam nas pausas.
+- Cada alvo alterna 6–13 segundos de caminhada com 1–2 segundos parado, em ritmos diferentes; braços e pernas repousam nas pausas.
+- Os percursos limitam os trechos encobertos para que nenhum alvo fique mais de 5 segundos escondido, inclusive os últimos da rodada.
 - Árvores e prédios bloqueiam disparos; indicadores dos alvos desaparecem quando corpo e cabeça estão encobertos.
 - Munição infinita, sem recarga; intervalo de 0,9 segundo entre disparos.
 - Projéteis percorrem o cenário em tempo real: 400 m levam cerca de 0,49 segundo e 700 m cerca de 0,85 segundo.

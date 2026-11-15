@@ -7,6 +7,7 @@ export const ZERO_DISTANCE = 300
 export const GRAVITY = 9.81
 export const SHOT_INTERVAL = 0.9
 export const SCOPE_SWAY_STRENGTH = 1
+export const MAX_HIDDEN_SECONDS = 5
 
 export function random(seed: number) {
   let value = seed >>> 0
@@ -112,11 +113,18 @@ const buildingBoxes = BUILDINGS.map(b => new THREE.Box3(
 const treeBoxes = TREES.map(t => {
   const radius = t.h * (t.pine ? 0.26 : 0.34)
   return new THREE.Box3(
-    new THREE.Vector3(t.x - radius, t.y + t.h * 0.25, t.z - radius),
-    new THREE.Vector3(t.x + radius, t.y + t.h * 1.15, t.z + radius),
+    new THREE.Vector3(t.x - radius - 0.5, t.y, t.z - radius - 1),
+    new THREE.Vector3(t.x + radius + 2, t.y + t.h * 1.15, t.z + radius),
   )
 })
-const viewObstacles = [...buildingBoxes, ...treeBoxes]
+const carBoxes = [-202.5, -92.5, 17.5].map((x, i) => {
+  const z = -185 + i * 74
+  return new THREE.Box3(
+    new THREE.Vector3(x - 2.7, heightAt(x, z), z - 3.8),
+    new THREE.Vector3(x + 2.7, heightAt(x, z) + 2.7, z + 3.8),
+  )
+})
+const viewObstacles = [...buildingBoxes, ...treeBoxes, ...carBoxes]
 const walkingObstacles = [
   ...BUILDINGS,
   { x: -202.5, z: -185, w: 3.8, d: 7.5 },
@@ -171,6 +179,42 @@ function routeDistances(route: [number, number][]) {
   return distances
 }
 
+function exposedRoute(spec: TargetSpec) {
+  const total = spec.distances.at(-1)!
+  const steps = Math.ceil(total / 0.25)
+  const position = new THREE.Vector3()
+  // Reserva tempo para uma pausa de até 2 s e uma margem entre amostras.
+  const hiddenDistance = spec.speed * (MAX_HIDDEN_SECONDS - 2 - 1)
+  let start = -1
+  let lastVisible = 0
+  let bestStart = 0
+  let bestEnd = 0
+  for (let sample = 0; sample <= steps; sample++) {
+    const distance = sample * total / steps
+    positionAtRouteDistance(spec, distance, position)
+    if (clearView(position.toArray() as [number, number, number])) {
+      if (start < 0 || distance - lastVisible > hiddenDistance) start = distance
+      lastVisible = distance
+      if (distance - start > bestEnd - bestStart) {
+        bestStart = start
+        bestEnd = distance
+      }
+    } else if (distance - lastVisible > hiddenDistance) {
+      start = -1
+    }
+  }
+  if (bestEnd - bestStart < 4) return undefined
+  // As duas pontas ficam expostas para não prolongar o esconderijo na volta.
+  positionAtRouteDistance(spec, bestStart, position)
+  const route: [number, number][] = [[position.x, position.z]]
+  spec.route.forEach((point, index) => {
+    if (spec.distances[index] > bestStart && spec.distances[index] < bestEnd) route.push(point)
+  })
+  positionAtRouteDistance(spec, bestEnd, position)
+  route.push([position.x, position.z])
+  return route
+}
+
 export function makeTargets(seed: number): TargetSpec[] {
   const rng = random(seed)
   const targets: TargetSpec[] = []
@@ -183,7 +227,7 @@ export function makeTargets(seed: number): TargetSpec[] {
       : { minX: 90, maxX: 335, minZ: -230, maxZ: 92 }
     let chosen: TargetSpec | undefined
     let best: TargetSpec | undefined
-    let bestExposure = 0
+    let bestLength = 0
     for (let attempt = 0; attempt < 500; attempt++) {
       let route: [number, number][]
       if (forest) {
@@ -220,21 +264,21 @@ export function makeTargets(seed: number): TargetSpec[] {
         id: i + 1, position: [0, 0, 0], zone: forest ? 'FOREST' : 'STREET',
         moving: true, phase: rng() * Math.PI * 2, route, distances: routeDistances(route),
         speed: 0.8 + rng() * 0.9, loop: !forest,
-        walkDuration: 6 + rng() * 7, pauseDuration: 2 + rng() * 4,
+        walkDuration: 6 + rng() * 7, pauseDuration: 1 + rng(),
         clothing: outfit[Math.floor(rng() * outfit.length)],
         skin: ['#bf9576', '#a67958', '#d0ac8c', '#805c45'][Math.floor(rng() * 4)],
       }
+      const accessibleRoute = exposedRoute(spec)
+      if (!accessibleRoute) continue
+      spec.route = accessibleRoute
+      spec.distances = routeDistances(accessibleRoute)
+      spec.loop = false
       const position = targetPosition(spec, 0, new THREE.Vector3())
       spec.position = position.toArray() as [number, number, number]
       if (targets.some(t => Math.hypot(t.position[0] - position.x, t.position[2] - position.z) < 14)) continue
-      // O percurso precisa oferecer janelas de visão e trechos encobertos pelos obstáculos.
-      let visible = 0
-      for (let sample = 0; sample < 24; sample++) {
-        positionAlongRoute(spec, sample * spec.distances.at(-1)! / (24 * spec.speed), position)
-        if (clearView(position.toArray() as [number, number, number])) visible++
-      }
-      if (visible < 24 && visible > bestExposure) { best = spec; bestExposure = visible }
-      if (visible >= 3 && visible < 24) { chosen = spec; break }
+      const length = spec.distances.at(-1)!
+      if (length > bestLength) { best = spec; bestLength = length }
+      if (length >= 8) { chosen = spec; break }
     }
     if (!chosen) chosen = best
     if (!chosen) throw new Error('Unable to generate an accessible route for the targets.')
@@ -266,6 +310,10 @@ function positionAlongRoute(spec: TargetSpec, walkingTime: number, out: THREE.Ve
   const cycle = spec.loop ? total : total * 2
   let distance = (walkingTime * spec.speed + spec.phase / (Math.PI * 2) * cycle) % cycle
   if (distance > total) distance = cycle - distance
+  return positionAtRouteDistance(spec, distance, out)
+}
+
+function positionAtRouteDistance(spec: TargetSpec, distance: number, out: THREE.Vector3) {
   let index = 1
   while (index < spec.distances.length - 1 && spec.distances[index] < distance) index++
   const fraction = (distance - spec.distances[index - 1]) / (spec.distances[index] - spec.distances[index - 1])
