@@ -55,7 +55,10 @@ Clique em **Assumir posição** para o navegador capturar o mouse. O jogo foi fe
 - O vento permanece constante ao pausar e continuar; o painel mostra para onde ele sopra, com velocidade, graus e seta maiores na mira telescópica.
 - Shift reduz suavemente a oscilação; soltar a tecla devolve o movimento natural.
 - Zeragem a 300 m e velocidade inicial de 820 m/s. O vento é uma aproximação de jogabilidade.
-- Pontuação por acerto, distância, centro do alvo e alvos móveis. Precisão e tempo ao terminar.
+- Pontuação por abate: `(1.000 + distância em metros × 2 + bônus) ÷ tentativas`, arredondada para baixo, com mínimo de 1 ponto.
+- Um tiro rende o valor integral; dois rendem metade; três, um terço, e assim por diante. As tentativas incluem os erros desde o disparo que causou o abate anterior; no primeiro alvo, desde o início da rodada.
+- Bônus de 250 pontos por cabeça ou centro do alvo e 150 por alvo móvel, também divididos pelas tentativas. A 500 m, um alvo móvel sem acerto preciso rende 2.150 pontos com um tiro, 1.075 com dois e 716 com três.
+- A mensagem de abate mostra distância, tentativas e pontos ganhos. Precisão e tempo ao terminar.
 - Pausa ao perder o foco. A nova operação altera a distribuição dos alvos.
 
 ## Ajustes principais
@@ -63,6 +66,8 @@ Clique em **Assumir posição** para o navegador capturar o mouse. O jogo foi fe
 Em `src/world.ts`: `WORLD_SIZE`, `BULLET_SPEED`, `GRAVITY`, `ZERO_DISTANCE`, `SHOT_INTERVAL`, `SCOPE_SWAY_STRENGTH`, `OBSERVER`, `heightAt` e `makeTargets`.
 
 Em `src/ballistics.ts`: integração do projétil, limite de voo e colisões durante o trajeto.
+
+Em `src/scoring.ts`: valor base do abate, bônus por distância e precisão e redução por tentativas.
 
 Em `src/Game.tsx`: sensibilidade do mouse, duração entre disparos, efeito do vento e oscilação da mira.
 

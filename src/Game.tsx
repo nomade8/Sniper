@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import Environment from './Environment'
 import Rifle from './Rifle'
 import { playSound } from './audio'
+import { calculateTargetScore } from './scoring'
 import { advanceProjectile, createProjectile, isVisible, MAX_FLIGHT_SECONDS } from './ballistics'
 import type { Projectile } from './ballistics'
 import {
@@ -104,6 +105,7 @@ export default function Game(props: Props) {
   const colliders = useRef<THREE.Object3D[]>([])
   const swayWeight = useRef(0.16)
   const shotAt = useRef(-5)
+  const lastKillShot = useRef(0)
   const messageUntil = useRef(0)
   const holding = useRef(false)
   const hudAt = useRef(0)
@@ -129,12 +131,15 @@ export default function Game(props: Props) {
       const local = targetRoot?.worldToLocal(intersection.point.clone())
       const bullseye = intersection.object.userData.headshot === true || !!local && Math.hypot(local.x, local.y - 0.28) < 0.12
       const distance = Math.round(projectile.origin.distanceTo(intersection.point))
-      const points = 100 + Math.floor(distance / 10) + (bullseye ? 75 : 0) + (propsRef.current.targets.find(t => t.id === id)?.moving ? 50 : 0)
+      // O número do projétil evita cobrar neste abate os tiros posteriores ainda em voo.
+      const attempts = Math.max(1, projectile.shotNumber - lastKillShot.current)
+      const points = calculateTargetScore(distance, attempts, bullseye, !!propsRef.current.targets.find(t => t.id === id)?.moving)
+      lastKillShot.current = Math.max(lastKillShot.current, projectile.shotNumber)
       s.hits.push(id)
       if (targetRoot) targetRoot.visible = false
       s.score += points
       s.hitFlash = s.elapsed + 0.35
-      s.lastHit = `${bullseye ? 'BULLSEYE' : 'TARGET HIT'} · ${distance} m · +${points}`
+      s.lastHit = `${bullseye ? 'BULLSEYE' : 'TARGET HIT'} · ${distance} m · ${attempts} ${attempts === 1 ? 'SHOT' : 'SHOTS'} · +${points}`
       s.message = s.lastHit
       messageUntil.current = s.elapsed + 3
       playSound('hit')
@@ -169,7 +174,7 @@ export default function Game(props: Props) {
       const acceleration = new THREE.Vector3(
         Math.sin(windAngle) * s.wind * 0.7, -GRAVITY, -Math.cos(windAngle) * s.wind * 0.7,
       )
-      projectiles.current.push(createProjectile(start, velocity, acceleration))
+      projectiles.current.push(createProjectile(start, velocity, acceleration, s.shots))
       pitch.current = Math.min(0.25, pitch.current + (s.scoped ? 0.002 : 0.01))
       publish()
     }

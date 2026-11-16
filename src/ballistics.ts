@@ -13,10 +13,11 @@ export interface Projectile {
   velocity: THREE.Vector3
   acceleration: THREE.Vector3
   age: number
+  shotNumber: number
 }
 
-export function createProjectile(origin: THREE.Vector3, velocity: THREE.Vector3, acceleration: THREE.Vector3): Projectile {
-  return { origin: origin.clone(), position: origin.clone(), velocity: velocity.clone(), acceleration: acceleration.clone(), age: 0 }
+export function createProjectile(origin: THREE.Vector3, velocity: THREE.Vector3, acceleration: THREE.Vector3, shotNumber = 1): Projectile {
+  return { origin: origin.clone(), position: origin.clone(), velocity: velocity.clone(), acceleration: acceleration.clone(), age: 0, shotNumber }
 }
 
 export function isVisible(object: THREE.Object3D) {
