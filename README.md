@@ -46,6 +46,7 @@ Clique em **Assumir posição** para o navegador capturar o mouse. O jogo foi fe
 - Posições iniciais, percursos, velocidades e roupas sorteados ao abrir o jogo e a cada nova operação.
 - Percursos contornam prédios, carros e troncos, alternando janelas de visão e trechos encobertos.
 - Cada alvo alterna 6–13 segundos de caminhada com 1–2 segundos parado, em ritmos diferentes; braços e pernas repousam nas pausas.
+- Caminhada lenta entre 0,45 e 0,8 m/s; o corpo acompanha a direção de cada trecho e gira ao retornar, evitando deslocamento lateral.
 - Os percursos limitam os trechos encobertos para que nenhum alvo fique mais de 5 segundos escondido, inclusive os últimos da rodada.
 - Árvores e prédios bloqueiam disparos; indicadores dos alvos desaparecem quando corpo e cabeça estão encobertos.
 - Munição infinita, sem recarga; intervalo de 0,9 segundo entre disparos.

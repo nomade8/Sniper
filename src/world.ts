@@ -263,7 +263,7 @@ export function makeTargets(seed: number): TargetSpec[] {
       const spec: TargetSpec = {
         id: i + 1, position: [0, 0, 0], zone: forest ? 'FOREST' : 'STREET',
         moving: true, phase: rng() * Math.PI * 2, route, distances: routeDistances(route),
-        speed: 0.8 + rng() * 0.9, loop: !forest,
+        speed: 0.45 + rng() * 0.35, loop: !forest,
         walkDuration: 6 + rng() * 7, pauseDuration: 1 + rng(),
         clothing: outfit[Math.floor(rng() * outfit.length)],
         skin: ['#bf9576', '#a67958', '#d0ac8c', '#805c45'][Math.floor(rng() * 4)],
@@ -306,16 +306,35 @@ export function targetPosition(spec: TargetSpec, elapsed: number, out: THREE.Vec
 }
 
 function positionAlongRoute(spec: TargetSpec, walkingTime: number, out: THREE.Vector3) {
+  return positionAtRouteDistance(spec, routeMotion(spec, walkingTime).distance, out)
+}
+
+function routeMotion(spec: TargetSpec, walkingTime: number) {
   const total = spec.distances.at(-1)!
   const cycle = spec.loop ? total : total * 2
-  let distance = (walkingTime * spec.speed + spec.phase / (Math.PI * 2) * cycle) % cycle
-  if (distance > total) distance = cycle - distance
-  return positionAtRouteDistance(spec, distance, out)
+  const progress = (walkingTime * spec.speed + spec.phase / (Math.PI * 2) * cycle) % cycle
+  const returning = !spec.loop && progress >= total
+  return { distance: returning ? cycle - progress : progress, returning }
+}
+
+function routeSegment(spec: TargetSpec, distance: number) {
+  let index = 1
+  while (index < spec.distances.length - 1 && spec.distances[index] <= distance) index++
+  return index
+}
+
+export function targetHeading(spec: TargetSpec, elapsed: number) {
+  // Alinha o corpo ao trecho atual, inclusive nas curvas e na volta do percurso.
+  const { distance, returning } = routeMotion(spec, targetMotion(spec, elapsed).walkingTime)
+  const index = routeSegment(spec, distance)
+  const a = spec.route[index - 1]
+  const b = spec.route[index]
+  const direction = returning ? -1 : 1
+  return Math.atan2((b[0] - a[0]) * direction, (b[1] - a[1]) * direction)
 }
 
 function positionAtRouteDistance(spec: TargetSpec, distance: number, out: THREE.Vector3) {
-  let index = 1
-  while (index < spec.distances.length - 1 && spec.distances[index] < distance) index++
+  const index = routeSegment(spec, distance)
   const fraction = (distance - spec.distances[index - 1]) / (spec.distances[index] - spec.distances[index - 1])
   const a = spec.route[index - 1]
   const b = spec.route[index]

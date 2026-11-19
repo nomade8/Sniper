@@ -5,11 +5,11 @@ import Environment from './Environment'
 import Rifle from './Rifle'
 import { playSound } from './audio'
 import { calculateTargetScore } from './scoring'
-import { advanceProjectile, createProjectile, isVisible, MAX_FLIGHT_SECONDS } from './ballistics'
+import { advanceProjectile, createAimedProjectile, isVisible, MAX_FLIGHT_SECONDS } from './ballistics'
 import type { Projectile } from './ballistics'
 import {
-  BULLET_SPEED, GRAVITY, INITIAL_PITCH, INITIAL_YAW, initialStats,
-  OBSERVER, SHOT_INTERVAL, SCOPE_SWAY_STRENGTH, targetMotion, targetPosition, ZERO_DISTANCE,
+  INITIAL_PITCH, INITIAL_YAW, initialStats,
+  OBSERVER, SHOT_INTERVAL, SCOPE_SWAY_STRENGTH, targetHeading, targetMotion, targetPosition,
 } from './world'
 import type { GameStats, TargetSpec } from './world'
 
@@ -37,16 +37,12 @@ function Target({ spec, stats }: { spec: TargetSpec; stats: React.RefObject<Game
   const rightLeg = useRef<THREE.Group>(null)
   const leftArm = useRef<THREE.Group>(null)
   const rightArm = useRef<THREE.Group>(null)
-  const future = useMemo(() => new THREE.Vector3(), [])
   const collision = { collision: true, targetId: spec.id }
   useFrame(() => {
     if (!group.current) return
     const t = stats.current.elapsed
     targetPosition(spec, t, group.current.position)
-    targetPosition(spec, t + 0.05, future)
-    const dx = future.x - group.current.position.x
-    const dz = future.z - group.current.position.z
-    if (Math.hypot(dx, dz) > 0.001) group.current.rotation.y = Math.atan2(dx, dz)
+    group.current.rotation.y = targetHeading(spec, t)
     // Braços e pernas voltam à posição neutra durante as pausas da caminhada.
     const motion = targetMotion(spec, t)
     const stride = Math.sin(motion.walkingTime * spec.speed * 7 + spec.phase) * 0.38 * motion.strideWeight
@@ -164,17 +160,7 @@ export default function Game(props: Props) {
       recoil.current = 1
       playSound('shot')
       camera.getWorldDirection(aim)
-      const start = camera.position.clone()
-      const right = new THREE.Vector3().crossVectors(aim, camera.up).normalize()
-      const up = new THREE.Vector3().crossVectors(right, aim).normalize()
-      // A elevação compensa a gravidade a 300 m e o vento desvia a trajetória.
-      const velocity = aim.clone().multiplyScalar(BULLET_SPEED)
-      velocity.addScaledVector(up, GRAVITY * ZERO_DISTANCE / (2 * BULLET_SPEED))
-      const windAngle = THREE.MathUtils.degToRad(s.windDirection)
-      const acceleration = new THREE.Vector3(
-        Math.sin(windAngle) * s.wind * 0.7, -GRAVITY, -Math.cos(windAngle) * s.wind * 0.7,
-      )
-      projectiles.current.push(createProjectile(start, velocity, acceleration, s.shots))
+      projectiles.current.push(createAimedProjectile(camera.position, aim, camera.up, s.wind, s.windDirection, s.shots))
       pitch.current = Math.min(0.25, pitch.current + (s.scoped ? 0.002 : 0.01))
       publish()
     }
@@ -272,6 +258,7 @@ export default function Game(props: Props) {
     }
     if (hudAt.current >= 0.1) {
       hudAt.current = 0
+      scene.updateMatrixWorld(true)
       camera.getWorldDirection(aim)
       raycaster.set(camera.position, aim)
       raycaster.far = 1500

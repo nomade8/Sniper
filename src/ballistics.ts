@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { BULLET_SPEED, GRAVITY, ZERO_DISTANCE } from './world'
 
 export const MAX_FLIGHT_SECONDS = 1.6
 const PHYSICS_STEP = 0.01
@@ -18,6 +19,17 @@ export interface Projectile {
 
 export function createProjectile(origin: THREE.Vector3, velocity: THREE.Vector3, acceleration: THREE.Vector3, shotNumber = 1): Projectile {
   return { origin: origin.clone(), position: origin.clone(), velocity: velocity.clone(), acceleration: acceleration.clone(), age: 0, shotNumber }
+}
+
+export function createAimedProjectile(origin: THREE.Vector3, direction: THREE.Vector3, cameraUp: THREE.Vector3, wind: number, windDirection: number, shotNumber = 1) {
+  const forward = direction.clone().normalize()
+  const right = new THREE.Vector3().crossVectors(forward, cameraUp).normalize()
+  const up = new THREE.Vector3().crossVectors(right, forward).normalize()
+  const velocity = forward.multiplyScalar(BULLET_SPEED)
+    .addScaledVector(up, GRAVITY * ZERO_DISTANCE / (2 * BULLET_SPEED))
+  const angle = THREE.MathUtils.degToRad(windDirection)
+  const acceleration = new THREE.Vector3(Math.sin(angle) * wind * 0.7, -GRAVITY, -Math.cos(angle) * wind * 0.7)
+  return createProjectile(origin, velocity, acceleration, shotNumber)
 }
 
 export function isVisible(object: THREE.Object3D) {
